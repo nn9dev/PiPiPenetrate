@@ -1,6 +1,8 @@
 #!/bin/bash
 # run_dmc.sh by goodafternoon 
 
+cd "$HOME" || exit
+
 # Options "header"
 
 # FIRMWARE_VERSION: 7.00-11.00
@@ -48,6 +50,9 @@ PPPWN_OPT_GROOMDELAY=4
 # I tested that setting it to 10240 can run normally, and the memory usage is about 3MB. 
 # (Note: A value that is too small may cause some packets to not be captured properly)"
 PPPWN_OPT_BUFFERSIZE=0
+
+# "--use-old-ipv6: Use the old IPv6 from TheFloW. Some difficult consoles work better with this for whatever reason."
+PPPWN_OPT_USE_OLD_IPV6=
 
 
 # _NUM options, these will be passed as arguments to pppwn
@@ -139,11 +144,21 @@ then
     read -r -p "PIN_NUM? (Default: 4096 or 0x1000 ) -> " PPPWN_OPT_PIN_NUM
     read -r -p "CORRUPT_NUM? (Default: 1 or 0x1) -> " PPPWN_OPT_CORRUPT_NUM
   fi
-
   # set defaults if any are empty
   if [ "${PPPWN_OPT_SPRAY_NUM}" == "" ]; then PPPWN_OPT_SPRAY_NUM=0x1000; fi;
   if [ "${PPPWN_OPT_PIN_NUM}" == "" ]; then PPPWN_OPT_PIN_NUM=0x1000; fi;
   if [ "${PPPWN_OPT_CORRUPT_NUM}" == "" ]; then PPPWN_OPT_CORRUPT_NUM=0x1; fi;
+
+  echoColor "Using the old IPv6 from TheFloW can make some edge case consoles work better." 36
+  echoColor "It's reccomended to leave this at NO unless you've tried everything else." 32
+  read -r -p "Use old IPv6? ([y]es/[n]o) -> " USE_OLD_IPV6
+  USE_OLD_IPV6=$(echo "${USE_OLD_IPV6}" | tr '[:upper:]' '[:lower:]') #convert answer to lowercase
+  if [ "${USE_OLD_IPV6}" == "y" ] || [ "${USE_OLD_IPV6}" == "yes" ]
+  then
+    PPPWN_OPT_USE_OLD_IPV6="--use-old-ipv6"
+  else
+    PPPWN_OPT_USE_OLD_IPV6=""
+  fi
 fi
 
 echo
@@ -308,7 +323,7 @@ echo
 echoColor "Generating run.sh at /boot/firmware/run.sh" "38;5;202"
 
 echo "#!/bin/bash
-/boot/firmware/PPPwn/pppwn --interface ${PPPWN_INTERFACE} --fw ${FW_ALSO} --stage1 "stage1.bin" --stage2 "stage2.bin" -t ${PPPWN_OPT_TIMEOUT} -wap ${PPPWN_OPT_WAITAFTERPIN} -gd ${PPPWN_OPT_GROOMDELAY} -bs ${PPPWN_OPT_BUFFERSIZE} -cn ${PPPWN_OPT_CORRUPT_NUM} -pn ${PPPWN_OPT_PIN_NUM} -sn ${PPPWN_OPT_SPRAY_NUM} --auto-retry 
+/boot/firmware/PPPwn/pppwn --interface ${PPPWN_INTERFACE} --fw ${FW_ALSO} --stage1 "stage1.bin" --stage2 "stage2.bin" -t ${PPPWN_OPT_TIMEOUT} -wap ${PPPWN_OPT_WAITAFTERPIN} -gd ${PPPWN_OPT_GROOMDELAY} -bs ${PPPWN_OPT_BUFFERSIZE} -cn ${PPPWN_OPT_CORRUPT_NUM} -pn ${PPPWN_OPT_PIN_NUM} -sn ${PPPWN_OPT_SPRAY_NUM} ${PPPWN_OPT_USE_OLD_IPV6} --auto-retry 
 
 " >run.sh
 
